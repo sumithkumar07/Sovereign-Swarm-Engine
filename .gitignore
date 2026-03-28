@@ -1,0 +1,24 @@
+# Compiled object files
+*.obj
+*.o
+*.out
+
+# Executables
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Visual Studio files
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# Temporary log / output files
+*_output.txt
+v7_output.txt
+*.log
+
+# Third-party downloaded repos
+MiroFish/
