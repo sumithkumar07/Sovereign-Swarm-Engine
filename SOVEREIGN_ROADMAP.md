@@ -145,6 +145,26 @@ These rules override everything else. If we break them, we go back.
 
 ---
 
+## 🚀 STAGE 4: THE TITAN PROTOCOL (GPU Integration)
+> Goal: Port the mathematically proven Sovereign Engine from the CPU to hyper-parallel NVIDIA CUDA cores to scale parameters dramatically.
+
+### Phase 10: Infrastructure Initialization ✅
+- **What**: Write `hello_gpu.cu` to prove the `nvcc` pipeline compiles natively within Windows without MSVC Linker mismatch crashing.
+- **Why**: Moving an AI Engine to GPU is mathematically lethal if the C++ linker fails on basic Host-to-Device memory calls.
+- **Success Metric**: Output a parallel array addition directly from VRAM via `vcvarsall.bat` + `nvcc`.
+
+### Phase 11: V-Scaling The Block ⬜
+- **What**: Port the `SovereignBlock` into a VRAM-based execution environment (`sovereign_v10_cuda.cu`).
+- **Why**: CPU for-loops are limited by clock limits. Replacing them with raw thread concurrency `__global__` Kernels unlocks massively wider matrices (`H_DIM`).
+- **Success Metric**: Compile a model mathematically identical in output to Phase 5.5 but operating exponentially faster utilizing >1 Million parameters.
+
+### Phase 12: The Autonomous Titan Swarm ⬜
+- **What**: Inject the CUDA-accelerated brains into the Swarm Sandbox.
+- **Why**: Combine the multi-agent emergence of Phase 9 with the VRAM parallelism of Phase 11 to achieve world-class localized simulation offline.
+- **Success Metric**: Deploy thousands of autonomous, intelligent Swarm Agents natively.
+
+---
+
 # 📓 PROGRESS LOG (The Journey)
 
 ## Session 1 — March 28, 2026
