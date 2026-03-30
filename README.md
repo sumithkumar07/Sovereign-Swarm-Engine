@@ -28,7 +28,7 @@ Unlike standard transformers, Sovereign leverages a **High-Order Geometric Manif
 graph TD
     User([Sovereign Workbench]) -->|Command| Manifold{Titan Manifold Hub}
     
-    subgraph Swarm Core
+    subgraph SC ["Swarm Core"]
         Manifold --> Alpha[Agent-Alpha: Lead Reasoning]
         Manifold --> Beta[Agent-Beta: Pattern Discovery]
         Manifold --> Delta[Agent-Delta: Strategic Analysis]
@@ -37,7 +37,7 @@ graph TD
     
     Alpha <-->|Sync| Beta
     Delta <-->|Sync| Gamma
-    Swarm Core --> Output[High-Precision Manifold Response]
+    Alpha & Beta & Delta & Gamma --> Output[High-Precision Manifold Response]
 ```
 
 ---
