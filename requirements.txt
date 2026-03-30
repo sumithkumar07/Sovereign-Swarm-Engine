@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+numpy
+requests
+python-multipart
+# ctypes is standard lib, no need for pip
