@@ -9,7 +9,7 @@ import {
    X, Info, Database, Clock, Maximize2, Minus, Plus
 } from 'lucide-react';
 
-const BACKEND_URL = "http://localhost:7860";
+const BACKEND_URL = "https://sumith007-sovereign-brain.hf.space";
 
 interface Message {
    id: string;
