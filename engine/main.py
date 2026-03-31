@@ -67,17 +67,46 @@ class SovereignAPI:
                 print("[ERROR] Master Brain allocation failed (Memory?).")
                 return
 
-            # Initialize Agents
-            agent_names = ["Alpha", "Beta", "Delta", "Gamma"]
-            for i, name in enumerate(agent_names):
-                ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 100 * (i+1))
-                if ptr:
-                    self.agents[name] = ptr
+            # Initialize 100 Agents from personalities.json
+            try:
+                with open(os.path.join(os.path.dirname(__file__), "personalities.json"), 'r') as f:
+                    personalities = json.load(f)
+                
+                print(f"[ENGINE] Loading {len(personalities)} unique agent personalities...")
+                for i, p in enumerate(personalities):
+                    name = p["name"]
+                    persona = p["personality"]
+                    # Use unique seed per agent
+                    ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 1000 * (i+1))
+                    if ptr:
+                        self.agents[name] = ptr
+                        # PERSONALITY INJECTION: Feed the agent its identity
+                        obs = f"My name is {name}. My role is: {persona}"
+                        self.lib.sovereign_agent_observe(ptr, obs.encode('utf-8'))
+            except Exception as pe:
+                print(f"[WARNING] Personalities failed: {pe}. Using fallback names.")
+                agent_names = ["Alpha", "Beta", "Delta", "Gamma"]
+                for i, name in enumerate(agent_names):
+                    ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 100 * (i+1))
+                    if ptr: self.agents[name] = ptr
             
             print(f"[SUCCESS] Sovereign Swarm Engine Loaded: {len(self.agents)} agents active.")
         except Exception as e:
             print(f"[ERROR] Critical Bridge Failure: {e}")
             self.lib = None
+
+    def __del__(self):
+        """Explicitly free C++ pointers to prevent memory leaks."""
+        if not self.lib:
+            return
+        
+        print("[CLEANUP] Freeing 100 Agent States...")
+        for name, ptr in self.agents.items():
+            self.lib.sovereign_free_agent(ptr)
+        
+        if self.master_brain:
+            print("[CLEANUP] Deallocating 3.2M Parameter Master Brain...")
+            self.lib.sovereign_free_master(self.master_brain)
 
 # Global Engine Instance
 engine = SovereignAPI()
@@ -96,56 +125,75 @@ def log_to_session(session_id, pulse):
         data = []
         if os.path.exists(filename):
             with open(filename, 'r') as f:
-                data = json.load(f)
+                try:
+                    data = json.load(f)
+                except:
+                    data = []
         data.append(pulse)
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
     except Exception as e:
-        print(f"[REPORTER ERROR] Persistent Log failed: {e}")
+        print(f"[ERROR] Session logging failed: {e}")
 
-def swarm_logic_loop(seed_text: str):
-    global swarm_active, pulse_buffer
+def swarm_logic_loop():
+    global swarm_active, pulse_buffer, current_session_id
     
-    print(f"[SWARM] Heartbeat started with seed: {seed_text[:30]}...")
-    
-    # 1. Initial Broadcast
-    for name, ptr in engine.agents.items():
-        engine.lib.sovereign_agent_observe(ptr, seed_text.encode('utf-8'))
-    
+    pulse_count = 0
     agent_names = list(engine.agents.keys())
     
+    if not agent_names:
+        print("[ERROR] No agents available for swarm loop.")
+        swarm_active = False
+        return
+
+    print(f"[SWARM] Starting autonomous swarm pulse for session {current_session_id}")
+    
     while swarm_active:
-        with swarm_lock:
-            if not engine.lib: break
+        pulse_count += 1
+        
+        # --- ROUND-ROBIN SPEAKER SELECTION WITH INTERRUPTION ---
+        # Base: Rotate through agents in order
+        speaker_idx = (pulse_count - 1) % len(agent_names)
+        
+        # 20% Chance of an "interruption" or "lateral response" from a random agent
+        if random.random() < 0.2:
+            speaker_idx = random.randint(0, len(agent_names) - 1)
             
-            # 2. Select Agent and Act
-            speaker_name = random.choice(agent_names)
-            speaker_ptr = engine.agents[speaker_name]
-            
-            try:
-                raw_res = engine.lib.sovereign_agent_act(speaker_ptr, 80, 0.7)
-                content = raw_res.decode('utf-8', errors='ignore') if raw_res else "... [Neural Silence] ..."
+        speaker_name = agent_names[speaker_idx]
+        speaker_ptr = engine.agents[speaker_name]
+        
+        try:
+            with swarm_lock:
+                # 1. Agent Generates Action (Thinking)
+                # Scaled for 3.2M model context: temp 0.7 for creativity
+                raw_res = engine.lib.sovereign_agent_act(speaker_ptr, 40, 0.7)
+                text = raw_res.decode('utf-8', errors='ignore') if raw_res else "... [Neural Silence] ..."
                 
-                pulse = {
-                    "agent_id": speaker_name,
-                    "content": content,
-                    "timestamp": time.time()
-                }
-                pulse_buffer.append(pulse)
-                if current_session_id:
-                    log_to_session(current_session_id, pulse)
-                
-                # 3. Cross-Observation (The "Swarm" Sync)
+                # 2. Broadcast to ALL other agents (Cross-Observation)
+                broadcast_msg = f"[{speaker_name}]: {text}"
                 for name, ptr in engine.agents.items():
                     if name != speaker_name:
-                        engine.lib.sovereign_agent_observe(ptr, f"[{speaker_name}]: {content}".encode('utf-8'))
-                
-                print(f"[PULSE] {speaker_name}: {content[:40]}...")
-            except Exception as e:
-                print(f"[HEARTBEAT CRASH] {e}")
-
-        # 4. Neural Cooldown
-        time.sleep(random.uniform(3.0, 6.0))
+                        engine.lib.sovereign_agent_observe(ptr, broadcast_msg.encode('utf-8'))
+            
+            # Create heartbeat pulse
+            pulse = {
+                "session_id": current_session_id,
+                "pulse_index": pulse_count,
+                "timestamp": time.time(),
+                "speaker": speaker_name,
+                "content": text,
+                "agent_id": f"Titan_{agent_names.index(speaker_name)+1:03d}"
+            }
+            
+            pulse_buffer.append(pulse)
+            log_to_session(current_session_id, pulse)
+            print(f"[PULSE] {speaker_name}: {text[:40]}...")
+            
+        except Exception as e:
+            print(f"[HEARTBEAT ERROR] {e}")
+            
+        # Delay between pulses (faster for 100 agents to keep it interesting)
+        time.sleep(2.5)
 
 class StartSwarmRequest(BaseModel):
     seed_text: str
@@ -180,8 +228,9 @@ async def observe(req: ObserveRequest):
         return {"error": "Engine offline"}
     
     try:
-        agent_ptr = engine.agents[req.agent_id]
-        engine.lib.sovereign_agent_observe(agent_ptr, req.text.encode('utf-8'))
+        with swarm_lock:
+            agent_ptr = engine.agents[req.agent_id]
+            engine.lib.sovereign_agent_observe(agent_ptr, req.text.encode('utf-8'))
         return {"status": "ok"}
     except:
         return {"error": "Observation crash"}
@@ -192,9 +241,10 @@ async def act(req: ActRequest):
         return {"error": "Engine offline"}
     
     try:
-        agent_ptr = engine.agents[req.agent_id]
-        # Call into C++
-        raw_res = engine.lib.sovereign_agent_act(agent_ptr, req.max_chars, req.temp)
+        with swarm_lock:
+            agent_ptr = engine.agents[req.agent_id]
+            # Call into C++
+            raw_res = engine.lib.sovereign_agent_act(agent_ptr, req.max_chars, req.temp)
         
         # Decode with safety
         if raw_res:
@@ -236,6 +286,16 @@ async def stop_swarm():
     global swarm_active
     swarm_active = False
     return {"status": "swarm_stopped"}
+
+@app.get("/swarm/agents")
+async def get_swarm_agents():
+    """Returns the list of all agents and their personalities for the UI legend."""
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "personalities.json"), 'r') as f:
+            return json.load(f)
+    except:
+        # Fallback if file not found
+        return [{"name": name, "personality": "Standard Neural Agent"} for name in engine.agents.keys()]
 
 @app.get("/swarm/pulses")
 async def get_pulses():
