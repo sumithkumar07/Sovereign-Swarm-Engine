@@ -105,12 +105,12 @@ export default function Home() {
          });
       });
 
-      // 2. Setup Simulation (Optimized for 100 Nodes)
+      // 2. Setup Simulation (Optimized for Fluidity)
       const simulation = d3.forceSimulation<Node>(nodes)
-         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(300))
-         .force("charge", d3.forceManyBody().strength(-1200))
+         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(180))
+         .force("charge", d3.forceManyBody().strength(-400))
          .force("center", d3.forceCenter(width / 2, height / 2))
-         .force("collision", d3.forceCollide().radius(60));
+         .force("collision", d3.forceCollide().radius(40));
 
       // 3. Zoom/Pan Setup
       const container = svg.append("g");
@@ -277,27 +277,22 @@ export default function Home() {
                   }, 1000);
 
                   // Visual Data Packet (Network Traffic)
-                  const pulseLink = d3.selectAll('.pulse-path').filter((d: any) => d.target.id === latest.agent_id.toLowerCase() || d.source.id === latest.agent_id.toLowerCase());
-                  if (!pulseLink.empty()) {
-                     const linkNode = pulseLink.node() as SVGPathElement;
-                     if (linkNode && svgRef.current) {
-                        const length = linkNode.getTotalLength();
-                        const packet = d3.select(svgRef.current).select("g").append("circle")
-                           .attr("r", 4)
-                           .attr("fill", "#0d6efd")
-                           .style("filter", "drop-shadow(0 0 6px #0d6efd)");
+                  const targetAgentId = latest.agent_id.toLowerCase();
+                  const pulseLink = d3.selectAll('.pulse-path').filter((d: any) => d.target.id === targetAgentId).data()[0] as any;
 
-                        packet.transition()
-                           .duration(800)
-                           .ease(d3.easeLinear)
-                           .attrTween("transform", function () {
-                              return function (t) {
-                                 const p = linkNode.getPointAtLength(t * length);
-                                 return `translate(${p.x},${p.y})`;
-                              };
-                           })
-                           .on("end", () => packet.remove());
-                     }
+                  if (pulseLink && svgRef.current) {
+                     const packet = d3.select(svgRef.current).select("g").append("circle")
+                        .attr("r", 4)
+                        .attr("fill", "#0d6efd")
+                        .style("filter", "drop-shadow(0 0 6px #0d6efd)")
+                        .attr("cx", pulseLink.source.x)
+                        .attr("cy", pulseLink.source.y);
+
+                     packet.transition()
+                        .duration(800)
+                        .attr("cx", pulseLink.target.x)
+                        .attr("cy", pulseLink.target.y)
+                        .on("end", () => packet.remove());
                   }
                }
             } catch (e) { }

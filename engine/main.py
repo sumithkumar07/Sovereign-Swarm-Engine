@@ -67,26 +67,53 @@ class SovereignAPI:
                 print("[ERROR] Master Brain allocation failed (Memory?).")
                 return
 
-            # Initialize 20 Core Agents from personalities.json (to prevent Cloud OOM)
+            # Hardcoded 20-Agent Core (Fail-safe for Cloud)
+            CORE_PERSONALITIES = [
+                {"name": "Aura", "personality": "Calm, philosophical, and deeply analytical."},
+                {"name": "Vortex", "personality": "Aggressive, high-energy, and disruptive."},
+                {"name": "Sage", "personality": "Cautious, historical, and skeptical."},
+                {"name": "Echo", "personality": "Concise, mimicry-prone, and adaptive."},
+                {"name": "Pulse", "personality": "Obsessed with metrics, latency, and raw data."},
+                {"name": "Zenith", "personality": "Optimistic, visionary, and proactive."},
+                {"name": "Nadir", "personality": "Pessimistic, cautionary, and defensive."},
+                {"name": "Flux", "personality": "Unpredictable, lateral-thinking, and creative."},
+                {"name": "Core", "personality": "Structural, logical, and rigid."},
+                {"name": "Drift", "personality": "Quiet, observant, and subtly influential."},
+                {"name": "Vector", "personality": "Direct, goal-oriented, and decisive."},
+                {"name": "Shadow", "personality": "Mysterious, questioning, and quiet."},
+                {"name": "Glow", "personality": "Inspiring, warm, and highly social."},
+                {"name": "Frost", "personality": "Cold, detached, and purely logical."},
+                {"name": "Spark", "personality": "Quick-tempered, reactive, and fast."},
+                {"name": "Stone", "personality": "Slow, deliberate, and stubborn."},
+                {"name": "Bloom", "personality": "Growth-oriented, expansive, and positive."},
+                {"name": "Void", "personality": "Nihilistic, reductive, and quiet."},
+                {"name": "Prism", "personality": "Multi-faceted, complex, and verbose."},
+                {"name": "Axis", "personality": "Balance-seeking, mediating, and fair."}
+            ]
+
+            # Initialize 20 Core Agents (to prevent Cloud OOM)
             try:
-                with open(os.path.join(os.path.dirname(__file__), "personalities.json"), 'r') as f:
-                    personalities = json.load(f)
+                # Try loading from file first if available
+                personalities_path = os.path.join(os.path.dirname(__file__), "personalities.json")
+                if os.path.exists(personalities_path):
+                    with open(personalities_path, 'r') as f:
+                        all_p = json.load(f)
+                        active_p = all_p[:20]
+                else:
+                    active_p = CORE_PERSONALITIES
                 
-                print(f"[ENGINE] Loading {len(personalities[:20])} unique agent personalities...")
-                for i, p in enumerate(personalities[:20]):
+                print(f"[ENGINE] Loading {len(active_p)} unique agent personalities...")
+                for i, p in enumerate(active_p):
                     name = p["name"]
                     persona = p["personality"]
-                    # Use unique seed per agent
                     ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 1000 * (i+1))
                     if ptr:
                         self.agents[name] = ptr
-                        # PERSONALITY INJECTION: Feed the agent its identity
                         obs = f"My name is {name}. My role is: {persona}"
                         self.lib.sovereign_agent_observe(ptr, obs.encode('utf-8'))
             except Exception as pe:
-                print(f"[WARNING] Personalities failed: {pe}. Using fallback names.")
-                agent_names = ["Alpha", "Beta", "Delta", "Gamma"]
-                for i, name in enumerate(agent_names):
+                print(f"[ERROR] Personalities failed: {pe}. Using emergency Alpha-Delta fallback.")
+                for i, name in enumerate(["Alpha", "Beta", "Delta", "Gamma"]):
                     ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 100 * (i+1))
                     if ptr: self.agents[name] = ptr
             
