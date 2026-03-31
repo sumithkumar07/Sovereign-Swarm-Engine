@@ -63,27 +63,29 @@ export default function Home() {
    const [agentMetadata, setAgentMetadata] = useState<any[]>([]);
 
    const scrollRef = useRef<HTMLDivElement>(null);
-   const svgRef = useRef<SVGSVGElement>(null);
+   const canvasRef = useRef<HTMLCanvasElement>(null);
    const zoomRef = useRef<any>(null);
+   const nodesRef = useRef<Node[]>([]);
+   const pulsesRef = useRef<{ s: any, t: any, p: number, id: string }[]>([]);
+   const [transform, setTransform] = useState(d3.zoomIdentity);
 
-   // --- D3 FORCE SIMULATION ---
+   // --- D3 FORCE SIMULATION (CANVAS POWERED) ---
    useEffect(() => {
-      if (view !== 'grid' || !svgRef.current) return;
+      if (view !== 'grid' || !canvasRef.current) return;
 
-      const width = 1000;
-      const height = 1000;
-      const svg = d3.select(svgRef.current);
-      svg.selectAll("*").remove(); // Clear for re-init
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
 
       // 1. Setup Dynamic Data (Based on Cloud Agents)
       const nodes: Node[] = [
-         { id: 'core', label: 'Central Brain', type: 'core', uuid: 'MASTER_V10_TITAN' }
+         { id: 'core', label: 'Central Brain', type: 'core', uuid: 'MASTER_V10_TITAN', x: width / 2, y: height / 2 }
       ];
       const links: Link[] = [];
-
       const colors = ['#f97316', '#ef4444', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
-
-      // Map agents from the cloud metadata
       const activeAgents = agentMetadata.length > 0 ? agentMetadata : [];
 
       activeAgents.forEach((agent, i) => {
@@ -93,136 +95,117 @@ export default function Home() {
             label: agent.name,
             type: 'agent',
             color: colors[i % colors.length],
-            uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`
+            uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`,
+            x: width / 2 + (Math.random() - 0.5) * 200,
+            y: height / 2 + (Math.random() - 0.5) * 200
          });
-
-         // Hub-and-Spoke links (to core)
-         links.push({
-            id: `l-${agentId}`,
-            source: 'core',
-            target: agentId,
-            label: 'NEURAL_PULSE'
-         });
+         links.push({ id: `l-${agentId}`, source: 'core', target: agentId, label: 'NEURAL_PULSE' });
       });
 
-      // 2. Setup Simulation (Optimized for Fluidity)
+      // 2. Setup Simulation
       const simulation = d3.forceSimulation<Node>(nodes)
-         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(180))
-         .force("charge", d3.forceManyBody().strength(-400))
+         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(220))
+         .force("charge", d3.forceManyBody().strength(-600))
          .force("center", d3.forceCenter(width / 2, height / 2))
-         .force("collision", d3.forceCollide().radius(40));
+         .force("collision", d3.forceCollide().radius(45));
 
-      // 3. Zoom/Pan Setup
-      const container = svg.append("g");
-      const zoom = d3.zoom().on("zoom", (event) => {
-         container.attr("transform", event.transform);
-      });
-      svg.call(zoom as any);
-      zoomRef.current = zoom;
+      // 3. Zoom Handling
+      const zoom = d3.zoom<HTMLCanvasElement, unknown>()
+         .scaleExtent([0.1, 5])
+         .on("zoom", (event) => {
+            setTransform(event.transform);
+         });
+      d3.select(canvas).call(zoom);
 
-      // Deselect on background click
-      svg.on("click", () => {
-         setSelectedNode(null);
-         setShowInspector(false);
-      });
-
-      // Arrowheads
-      svg.append("defs").selectAll("marker")
-         .data(["end"])
-         .enter().append("marker")
-         .attr("id", "arrowhead")
-         .attr("viewBox", "0 0 10 10")
-         .attr("refX", 25)
-         .attr("refY", 5)
-         .attr("markerWidth", 4)
-         .attr("markerHeight", 4)
-         .attr("orient", "auto")
-         .append("path")
-         .attr("d", "M 0 0 L 10 5 L 0 10 z")
-         .attr("fill", "#cccccc");
-
-      // Paths
-      const link = container.append("g")
-         .selectAll("path")
-         .data(links)
-         .enter().append("path")
-         .attr("class", "pulse-path")
-         .attr("id", d => `link-${d.id}`)
-         .attr("marker-end", "url(#arrowhead)");
-
-      // Labels on Paths
-      const linkText = container.append("g")
-         .selectAll("text")
-         .data(links)
-         .enter().append("text")
-         .attr("class", "relationship-label")
-         .append("textPath")
-         .attr("xlink:href", d => `#link-${d.id}`)
-         .attr("startOffset", "45%")
-         .style("text-anchor", "middle")
-         .text(d => d.label);
-
-      // Nodes
-      const node = container.append("g")
-         .selectAll("g")
-         .data(nodes)
-         .enter().append("g")
-         .on("click", (event, d) => {
-            event.stopPropagation();
-            setSelectedNode(d);
-            setShowInspector(true);
-            setHoveredNode(null);
-         })
-         .on("mouseover", (event, d) => {
-            setHoveredNode(d);
-            setMousePos({ x: event.clientX, y: event.clientY });
-         })
-         .on("mousemove", (event) => {
-            setMousePos({ x: event.clientX, y: event.clientY });
-         })
-         .on("mouseout", () => {
-            setHoveredNode(null);
-         })
-         .call(d3.drag<SVGGElement, Node>()
-            .on("start", (event, d) => {
-               if (!event.active) simulation.alphaTarget(0.3).restart();
-               d.fx = d.x;
-               d.fy = d.y;
-            })
-            .on("drag", (event, d) => {
-               d.fx = event.x;
-               d.fy = event.y;
-            })
-            .on("end", (event, d) => {
-               if (!event.active) simulation.alphaTarget(0);
-               d.fx = null;
-               d.fy = null;
-            }) as any);
-
-      node.append("circle")
-         .attr("r", d => d.type === 'core' ? 12 : 7)
-         .attr("class", d => d.type === 'core' ? 'master-node-core' : `manifold-node node-${d.id}`);
-
-      node.append("text")
-         .attr("dy", d => d.type === 'core' ? 30 : -15)
-         .attr("text-anchor", "middle")
-         .attr("class", "text-[9px] font-black text-slate-400 uppercase tracking-widest")
-         .text(d => d.label);
-
-      // 4. Update Loop
+      // 4. Render Loop
       simulation.on("tick", () => {
-         link.attr("d", (d: any) => {
-            const dx = d.target.x - d.source.x;
-            const dy = d.target.y - d.source.y;
-            const dr = Math.sqrt(dx * dx + dy * dy) * 1.5; // Curvature
-            return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+         nodesRef.current = nodes; // KEEP REF SYNCED
+         if (!ctx) return;
+         ctx.clearRect(0, 0, width, height);
+         ctx.save();
+         ctx.translate(transform.x, transform.y);
+         ctx.scale(transform.k, transform.k);
+
+         // Draw Links
+         ctx.beginPath();
+         ctx.strokeStyle = '#1e293b';
+         ctx.lineWidth = 1;
+         links.forEach(l => {
+            const s = l.source as any;
+            const t = l.target as any;
+            ctx.moveTo(s.x, s.y);
+            // Curved path logic
+            const dx = t.x - s.x;
+            const dy = t.y - s.y;
+            const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
+            // Simple straight lines for canvas speed, or quadraticCurveTo for flair
+            ctx.lineTo(t.x, t.y);
+         });
+         ctx.stroke();
+
+         // Draw Pulses (Neural Traffic)
+         pulsesRef.current.forEach((pulse, i) => {
+            const sx = pulse.s.x;
+            const sy = pulse.s.y;
+            const tx = pulse.t.x;
+            const ty = pulse.t.y;
+            const x = sx + (tx - sx) * pulse.p;
+            const y = sy + (ty - sy) * pulse.p;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = '#60a5fa';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#3b82f6';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            pulse.p += 0.02; // Speed of pulse
+         });
+         pulsesRef.current = pulsesRef.current.filter(p => p.p < 1);
+
+         // Draw Nodes
+         nodes.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x || 0, n.y || 0, n.type === 'core' ? 12 : 7, 0, 2 * Math.PI);
+            ctx.fillStyle = n.type === 'core' ? '#ffffff' : (n.color || '#3b82f6');
+            ctx.shadowBlur = (hoveredNode?.id === n.id || selectedNode?.id === n.id) ? 15 : 0;
+            ctx.shadowColor = n.color || '#3b82f6';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(n.label || '', n.x || 0, (n.y || 0) + (n.type === 'core' ? 30 : -15));
          });
 
-         node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+         ctx.restore();
       });
+
+      // 5. Interaction (Canvas logic)
+      const handlePointer = (event: any, isClick: boolean) => {
+         const [mx, my] = d3.pointer(event);
+         const transformedX = (mx - transform.x) / transform.k;
+         const transformedY = (my - transform.y) / transform.k;
+         const found = simulation.find(transformedX, transformedY, 20);
+
+         if (isClick) {
+            setSelectedNode(found || null);
+            setShowInspector(!!found);
+         } else {
+            setHoveredNode(found || null);
+            setMousePos({ x: event.clientX, y: event.clientY });
+         }
+      };
+
+      d3.select(canvas)
+         .on("mousemove", (e) => handlePointer(e, false))
+         .on("click", (e) => handlePointer(e, true));
 
       return () => { simulation.stop(); };
-   }, [view, agentMetadata, isLive]);
+   }, [view, agentMetadata, isLive, transform, hoveredNode, selectedNode]);
 
    // Sync with Backend
    useEffect(() => {
@@ -256,6 +239,16 @@ export default function Home() {
                const res = await fetch(`${BACKEND_URL}/swarm/pulses`);
                const data = await res.json();
                if (data.pulses && data.pulses.length > 0) {
+                  // Add to Canvas Pulses
+                  data.pulses.forEach((p: any) => {
+                     const targetName = p.agent_id;
+                     const targetNode = nodesRef.current.find(n => n.id === targetName);
+                     const sourceNode = nodesRef.current.find(n => n.id === 'core');
+                     if (sourceNode && targetNode) {
+                        pulsesRef.current.push({ s: sourceNode, t: targetNode, p: 0, id: `${p.agent_id}-${p.timestamp}` });
+                     }
+                  });
+
                   setMessages(prev => {
                      const existingIds = new Set(prev.map(m => m.id));
                      const newMsgs = data.pulses
@@ -268,32 +261,6 @@ export default function Home() {
                         }));
                      return [...prev, ...newMsgs];
                   });
-
-                  // Pulse Animation Trigger
-                  const latest = data.pulses[data.pulses.length - 1];
-                  d3.select(`.node-${latest.agent_id.toLowerCase()}`).classed('active', true);
-                  setTimeout(() => {
-                     d3.select(`.node-${latest.agent_id.toLowerCase()}`).classed('active', false);
-                  }, 1000);
-
-                  // Visual Data Packet (Network Traffic)
-                  const targetAgentId = latest.agent_id.toLowerCase();
-                  const pulseLink = d3.selectAll('.pulse-path').filter((d: any) => d.target.id === targetAgentId).data()[0] as any;
-
-                  if (pulseLink && svgRef.current) {
-                     const packet = d3.select(svgRef.current).select("g").append("circle")
-                        .attr("r", 4)
-                        .attr("fill", "#0d6efd")
-                        .style("filter", "drop-shadow(0 0 6px #0d6efd)")
-                        .attr("cx", pulseLink.source.x)
-                        .attr("cy", pulseLink.source.y);
-
-                     packet.transition()
-                        .duration(800)
-                        .attr("cx", pulseLink.target.x)
-                        .attr("cy", pulseLink.target.y)
-                        .on("end", () => packet.remove());
-                  }
                }
             } catch (e) { }
          }, 2000);
@@ -341,12 +308,12 @@ export default function Home() {
 
 
    const handleZoom = (type: 'in' | 'out' | 'reset') => {
-      if (!svgRef.current || !zoomRef.current) return;
-      const svg = d3.select(svgRef.current);
+      if (!canvasRef.current || !zoomRef.current) return;
+      const canvas = d3.select(canvasRef.current);
       if (type === 'reset') {
-         svg.transition().duration(750).call(zoomRef.current.transform, d3.zoomIdentity);
+         canvas.transition().duration(750).call(zoomRef.current.transform, d3.zoomIdentity);
       } else {
-         svg.transition().duration(300).call(zoomRef.current.scaleBy, type === 'in' ? 1.3 : 0.7);
+         canvas.transition().duration(300).call(zoomRef.current.scaleBy, type === 'in' ? 1.3 : 0.7);
       }
    };
 
@@ -391,7 +358,12 @@ export default function Home() {
          </div>
 
          {/* 2. D3 MANIFOLD */}
-         <svg ref={svgRef} className="w-full h-full z-10 cursor-grab active:cursor-grabbing" viewBox="0 0 1000 1000" />
+         <canvas
+            ref={canvasRef}
+            width={2000}
+            height={1500}
+            className="w-full h-full bg-[#020617] cursor-crosshair"
+         />
 
          {/* 3. FLOATING OVERLAYS */}
 
