@@ -67,13 +67,13 @@ class SovereignAPI:
                 print("[ERROR] Master Brain allocation failed (Memory?).")
                 return
 
-            # Initialize 100 Agents from personalities.json
+            # Initialize 20 Core Agents from personalities.json (to prevent Cloud OOM)
             try:
                 with open(os.path.join(os.path.dirname(__file__), "personalities.json"), 'r') as f:
                     personalities = json.load(f)
                 
-                print(f"[ENGINE] Loading {len(personalities)} unique agent personalities...")
-                for i, p in enumerate(personalities):
+                print(f"[ENGINE] Loading {len(personalities[:20])} unique agent personalities...")
+                for i, p in enumerate(personalities[:20]):
                     name = p["name"]
                     persona = p["personality"]
                     # Use unique seed per agent

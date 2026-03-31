@@ -75,19 +75,22 @@ export default function Home() {
       const svg = d3.select(svgRef.current);
       svg.selectAll("*").remove(); // Clear for re-init
 
-      // 1. Setup Dynamic Data (100 Agents)
+      // 1. Setup Dynamic Data (Based on Cloud Agents)
       const nodes: Node[] = [
          { id: 'core', label: 'Central Brain', type: 'core', uuid: 'MASTER_V10_TITAN' }
       ];
       const links: Link[] = [];
 
-      // Generate 100 Titan Agents
       const colors = ['#f97316', '#ef4444', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
-      for (let i = 1; i <= 100; i++) {
-         const agentId = `titan_${i.toString().padStart(3, '0')}`;
+
+      // Map agents from the cloud metadata
+      const activeAgents = agentMetadata.length > 0 ? agentMetadata : [];
+
+      activeAgents.forEach((agent, i) => {
+         const agentId = agent.name;
          nodes.push({
             id: agentId,
-            label: `Titan-${i.toString().padStart(3, '0')}`,
+            label: agent.name,
             type: 'agent',
             color: colors[i % colors.length],
             uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`
@@ -100,17 +103,7 @@ export default function Home() {
             target: agentId,
             label: 'NEURAL_PULSE'
          });
-
-         // Some Peer-to-Peer "Mesh" links for visual density
-         if (i > 1 && i % 10 === 0) {
-            links.push({
-               id: `m-${agentId}`,
-               source: nodes[nodes.length - 2].id,
-               target: agentId,
-               label: 'PEER_SYNC'
-            });
-         }
-      }
+      });
 
       // 2. Setup Simulation (Optimized for 100 Nodes)
       const simulation = d3.forceSimulation<Node>(nodes)
@@ -229,7 +222,7 @@ export default function Home() {
       });
 
       return () => { simulation.stop(); };
-   }, [view]);
+   }, [view, agentMetadata, isLive]);
 
    // Sync with Backend
    useEffect(() => {
