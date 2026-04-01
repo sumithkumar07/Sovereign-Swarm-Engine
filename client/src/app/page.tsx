@@ -49,7 +49,7 @@ const Typewriter = ({ text }: { text: string }) => {
 }
 
 export default function Home() {
-   const [view, setView] = useState<'landing' | 'grid'>('landing');
+   const [view, setView] = useState<'landing' | 'grid'>('grid');
    const [messages, setMessages] = useState<Message[]>([]);
    const [input, setInput] = useState('');
    const [isLive, setIsLive] = useState(false);
