@@ -7,8 +7,6 @@
 [![Scale](https://img.shields.io/badge/Parameters-1.5M_Titan-purple)](https://locallab.sbs)
 [![Status](https://img.shields.io/badge/Status-Active_Manifold-emerald)](#)
 
-![Sovereign Swarm Dashboard](assets/dashboard.png)
-
 **A 1.5M parameter local inference engine in C++/CUDA, runs on consumer hardware.**  
 [Explore the Workbench](https://locallab.sbs) • [Technical Specs](docs/Engine_Specs.md) • [Benchmarks & Results](results/README.md)
 
