@@ -16,10 +16,10 @@ interface Message {
 }
 
 const AGENT_MAP: Record<string, { color: string, name: string }> = {
-  "Alpha": { color: "text-[var(--miro-blue)]", name: "TITAN-ALPHA" },
-  "Beta": { color: "text-emerald-500", name: "TITAN-BETA" },
-  "Delta": { color: "text-purple-500", name: "TITAN-DELTA" },
-  "Gamma": { color: "text-amber-500", name: "TITAN-GAMMA" }
+  "Alpha": { color: "text-[var(--miro-blue)]", name: "AGENT-ALPHA" },
+  "Beta": { color: "text-emerald-500", name: "AGENT-BETA" },
+  "Delta": { color: "text-purple-500", name: "AGENT-DELTA" },
+  "Gamma": { color: "text-amber-500", name: "AGENT-GAMMA" }
 };
 
 export default function InteractionFeed() {
@@ -34,7 +34,7 @@ export default function InteractionFeed() {
         id: '0',
         sender: 'PROTOCOL',
         role: 'system',
-        content: `Initialization sequence ready. Awaiting Sovereign Manifold authorization...`,
+        content: `Initialization sequence ready. Awaiting Sovereign Swarm authorization...`,
         timestamp: new Date().toLocaleTimeString(),
         color: 'text-slate-400'
       }
@@ -107,7 +107,7 @@ export default function InteractionFeed() {
         {isStreaming && (
           <div className="flex items-center space-x-3 text-blue-500 animate-pulse pl-4">
              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-             <span className="text-[10px] uppercase font-bold tracking-widest">Neural Manifold Thinking...</span>
+             <span className="text-[10px] uppercase font-bold tracking-widest">Processing...</span>
           </div>
         )}
       </div>

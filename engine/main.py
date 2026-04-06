@@ -132,7 +132,7 @@ class SovereignAPI:
             self.lib.sovereign_free_agent(ptr)
         
         if self.master_brain:
-            print("[CLEANUP] Deallocating 3.2M Parameter Master Brain...")
+            print("[CLEANUP] Deallocating 1.5M Parameter Neural Core...")
             self.lib.sovereign_free_master(self.master_brain)
 
 # Global Engine Instance
@@ -209,7 +209,7 @@ def swarm_logic_loop():
                 "timestamp": time.time(),
                 "speaker": speaker_name,
                 "content": text,
-                "agent_id": f"Titan_{agent_names.index(speaker_name)+1:03d}"
+                "agent_id": f"Agent_{agent_names.index(speaker_name)+1:03d}"
             }
             
             pulse_buffer.append(pulse)
@@ -368,13 +368,13 @@ async def generate_swarm_report(session_id: str):
                 # Keep some logic fragments for the report
                 content = p.get("content", "")
                 if len(content) > 10 and len(highlights) < 5:
-                    highlights.append(f"**TITAN-{agent}**: \"{content[:150]}...\"")
+                    highlights.append(f"**AGENT-{agent}**: \"{content[:150]}...\"")
                     
         # Generate Markdown
         md = f"""# Sovereign Swarm Analytical Report
 
 ## 1. Executive Summary
-The Sovereign C++ engine successfully maintained an autonomous multi-agent simulation to resolve the injected reality seed.
+The Sovereign C++ engine successfully maintained an autonomous multi-agent simulation to resolve the initial prompt.
 
 **Seed Reality:** *"{seed_text}"*
 
@@ -383,12 +383,12 @@ The Sovereign C++ engine successfully maintained an autonomous multi-agent simul
 ## 2. Telemetry & Engagement
 - **Session UUID:** `{session_id}`
 - **Total Neural Pulses:** {total_pulses}
-- **Active Participating Titans:** {len(agent_counts.keys())}
+- **Active Participating Agents:** {len(agent_counts.keys())}
 
 ### Participation Distribution:
 """
         for agent, count in sorted(agent_counts.items(), key=lambda item: item[1], reverse=True):
-            md += f"- **TITAN-{agent}**: {count} pulses\n"
+            md += f"- **AGENT-{agent}**: {count} pulses\n"
             
         md += """
 ---

@@ -421,7 +421,7 @@ export default function Home() {
             </header>
             <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20">
                <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tight">The first autonomous <br /><span className="text-[#0d6efd]">Local Neural Swarm.</span></h1>
-               <p className="max-w-2xl text-xl text-slate-500 mb-12">Experience silicon-grade autonomy with our Clifford-initialized multi-agent engine.</p>
+               <p className="max-w-2xl text-xl text-slate-500 mb-12">Low-latency, local-first autonomous intelligence running on consumer hardware.</p>
                <button onClick={() => setView('grid')} className="px-10 py-5 bg-[#0d6efd] text-white rounded-xl font-bold flex items-center space-x-3 transition-all hover:scale-105 shadow-2xl">
                   <span>Start Live Session</span>
                   <ArrowRight className="w-5 h-5" />
@@ -437,7 +437,7 @@ export default function Home() {
          <div className="h-12 flex items-center justify-between px-10 z-50 pointer-events-none absolute w-full">
             <div className="flex items-center space-x-2 pointer-events-auto">
                <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-red-400'}`} />
-               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{isLive ? 'Sovereign_Manifold_v1.5 — LIVE' : 'Sovereign_Manifold — CONNECTING...'}</span>
+               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{isLive ? 'Sovereign_Swarm_v1.5 — LIVE' : 'Sovereign_Swarm — CONNECTING...'}</span>
             </div>
             <button
                onClick={() => setView('landing')}

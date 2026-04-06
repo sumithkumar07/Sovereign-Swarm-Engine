@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sovereign | 3.2M Param Titan Swarm",
-  description: "Experience the first autonomous local neural swarm with a 100% private 3.2M parameter engine.",
+  title: "Sovereign | 1.5M Parameter Local Engine",
+  description: "Privacy-focused, 1.5M parameter local inference engine.",
 };
 
 export default function RootLayout({
