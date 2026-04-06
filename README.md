@@ -1,4 +1,4 @@
-# Sovereign Titan Swarm V1.51 | Silicon Neural Authority
+# Sovereign Titan Swarm | 1.5M Parameter Local Inference Engine
 
 <div align="center">
 
@@ -7,18 +7,20 @@
 [![Scale](https://img.shields.io/badge/Parameters-1.5M_Titan-purple)](https://locallab.sbs)
 [![Status](https://img.shields.io/badge/Status-Active_Manifold-emerald)](#)
 
-**The first autonomous 1.5M parameter local engine for global manifold intelligence.**  
-[Explore the Workbench](https://locallab.sbs) • [Technical Specs](docs/Engine_Specs.md) • [Swarm Topology](docs/Architecture.md)
+![Sovereign Swarm Dashboard](assets/dashboard.png)
+
+**A 1.5M parameter local inference engine in C++/CUDA, runs on consumer hardware.**  
+[Explore the Workbench](https://locallab.sbs) • [Technical Specs](docs/Engine_Specs.md) • [Benchmarks & Results](results/README.md)
 
 </div>
 
 ---
 
-## 🏛️ The Authority of Local Silicon
-Sovereign is not a wrapper. It is a **Silicon-Grade Neural Authority** designed for true autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Titan-Class Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
+## 🏛️ The Power of Local Inference
+Sovereign is a high-performance, 1.5M parameter neural core designed for true on-device autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Titan-Class Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
 
 ### Mathematical Sincerity
-Unlike standard transformers, Sovereign leverages a **High-Order Geometric Manifold** (Clifford Initialization). Each of the 1,532,472 parameters is initialized via anti-commutative Clifford algebras, ensuring gradient stability and zero-feedback convergence.
+Unlike standard transformers, Sovereign leverages a **High-Order Geometric Manifold** (Clifford Initialization). Each parameter is initialized via anti-commutative Clifford algebras, ensuring gradient stability and zero-feedback convergence.
 
 ---
 
@@ -44,8 +46,8 @@ graph TD
 
 ## 🚀 Technical Pillars
 
-- **1.5M Parameter Titan Core**: High-fidelity local reasoning with zero human feedback.
-- **Native C++/64-bit Persistence**: Direct memory access via a hardened C-Bridge for maximum CUDA utility.
+- **1.5M Parameter Titan Core**: High-fidelity local reasoning optimized for consumer GPUs.
+- **Native C++/CUDA Engine**: Direct memory access via a hardened C-Bridge for maximum performance.
 - **Autonomous Manifold Alignment**: Self-stabilizing neural weights through active geometric backpropagation.
 - **Privacy-First Protocol**: 100% on-device. No telemetry. No cloud inference.
 
@@ -53,21 +55,20 @@ graph TD
 
 ## 🛠️ Quick Start
 
-### 1. The Swarm Hub (UI)
+### 1. The Workbench (UI)
 ```bash
 cd client
 npm install
 npm run dev
 ```
-Visit `localhost:3000` to access the **Titan Workbench**.
+Visit `localhost:3000` to access the **Sovereign Workbench**.
 
 ### 2. The Neural Engine (Core)
 ```bash
 # Requires CUDA 12.0+
-cd v9_swarm
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+cd engine
+# To build the CUDA trainer
+./build_cuda_trainer.bat
 ```
 
 ---
@@ -75,14 +76,14 @@ make -j$(nproc)
 ## 📚 Repository Structure
 
 - `client/`: Professional Next.js 15 workbench and landing page.
-- `v9_swarm/`: C++ native engine core (The 1.5M Param Titan).
-- `brain_bridge/`: FastAPI server managing the native bridge and agent lifecycle.
+- `engine/`: C++ native engine core (The 1.5M Param Titan).
+- `results/`: Performance benchmarks, token outputs, and memory profiles.
 - `docs/`: Technical deep-dives into manifold logic and engine physics.
 
 ---
 
 ## ⚖️ Governance & Policy
-- **License**: Apache 2.0. High-performance, high-freedom silicon.
+- **License**: Apache 2.0.
 - **Contribution**: See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Security**: Local-first by design. See [SECURITY.md](docs/SECURITY.md).
 
@@ -90,5 +91,5 @@ make -j$(nproc)
 
 <div align="center">
   <p><i>Orchestrating the future of local intelligence, one manifold at a time.</i></p>
-  <p><b>Built with Mathematical Sincerity by Sovereign.</b></p>
+  <p><b>Built with Technical Sincerity by Sovereign.</b></p>
 </div>
